@@ -54,3 +54,36 @@ def solution(picks, minerals):
                 return answer
 
     return answer
+
+
+
+# deque 사용 안할 경우
+def solution(picks, minerals):
+    tired=[[1,1,1],[5,1,1],[25,5,1]]
+    conn={"diamond":0, "iron":1, "stone":2}
+    
+    minerals=minerals[: 5*sum(picks)]
+    answer = 0
+    info=[]
+
+    while minerals:
+        count=0
+        d_used, i_used, s_used=0,0,0
+        while count <5:
+            count+=1
+            mineral=minerals.pop(0)
+            d_used+=tired[0][conn[mineral]]
+            i_used+=tired[1][conn[mineral]]
+            s_used+=tired[2][conn[mineral]]
+            if not minerals:
+                break
+        info.append([d_used,i_used,s_used])
+    info.sort(key=lambda x:[x[2],x[1],x[0]])
+    
+    for idx, p in enumerate(picks):
+        for _ in range(p):
+            if info:
+                answer+=info.pop()[idx]
+            else:
+                return answer
+    return answer
