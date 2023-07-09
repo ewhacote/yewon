@@ -2,44 +2,51 @@
 
 from collections import deque
 
-INF = float('inf')
-DIRS = ((-1, 0), (1, 0), (0, -1), (0, 1))
+def get_cnt(maps,start,end):
+    """ 입력받은 시작점부터 문자까지의 최소거리와 문자위치 계산 함수 """
+    r,c = start # 시작위치
+    R,C = len(maps),len(maps[0]) # 맵크기
+
+    # BFS
+    visited = set()
+    q = deque([(r,c,0)])
+    directions = ((1,0),(0,1),(-1,0),(0,-1))
+
+    while q:
+        now_r,now_c,cnt = q.popleft()
+        if (now_r,now_c) in visited: # 방문했다면 패스
+            continue
+        else: # 그렇지 않다면 추가
+            visited.add((now_r,now_c))
+            if maps[now_r][now_c] == "X": # 현 문자가 X면 패스
+                continue
+            elif (now_r,now_c) == end: # 도착점이면 현위치,거리 리턴
+                return cnt
+            else: # 아니라면 네 방향중 맵 크기 안쪽 위치를 deque에 추가
+                for dr,dc in directions:
+                    next_r,next_c = now_r+dr,now_c+dc
+                    if 0<=next_r<R and 0<=next_c<C:
+                        q.append((next_r,next_c,cnt+1))
+
+    return -1 # 문자에 접근 불가능한 경우
 
 
 def solution(maps):
-    MAX_R, MAX_C = len(maps), len(maps[0])
+    S_pos,L_pos,E_pos = None,None,None
+    # S,L,E의 위치 찾기
+    for i,row in enumerate(maps):
+        if "S" in row:
+            S_pos = (i,row.find("S"))
+        if "L" in row:
+            L_pos = (i,row.find("L"))
+        if "E" in row:
+            E_pos = (i,row.find("E"))
 
-    def bfs(start, end):
-        start_r, start_c, end_r, end_c = start[0], start[1], end[0], end[1]
-        counts = [[INF] * MAX_C for _ in range(MAX_R)]
-        counts[start_r][start_c] = 0
-        dq = deque([[start_r, start_c, counts[start_r][start_c]]])
-        while dq:
-            curr_r, curr_c, curr_count = dq.popleft()
-
-            if curr_r == end_r and curr_c == end_c:
-                return curr_count
-
-            for dir_r, dir_c in DIRS:
-                post_r, post_c, post_count = curr_r + dir_r, curr_c + dir_c, curr_count + 1
-                if 0 <= post_r < MAX_R and 0 <= post_c < MAX_C and maps[post_r][post_c] != 'X' and post_count < counts[post_r][post_c]:
-                    counts[post_r][post_c] = post_count
-                    dq.append([post_r, post_c, post_count])
-
+    # 시작점~레버의 거리 계산
+    lever_cnt = get_cnt(maps,start=S_pos,end=L_pos)
+    if lever_cnt == -1:
         return -1
 
-
-    start, lever, end = [0, 0], [0, 0], [0, 0]
-    for r in range(MAX_R):
-        for c in range(MAX_C):
-            if maps[r][c] == 'S':
-                start = [r, c]
-            elif maps[r][c] == 'L':
-                lever = [r, c]
-            elif maps[r][c] == 'E':
-                end = [r, c]
-
-    start_to_lever = bfs(start, lever)
-    lever_to_end = bfs(lever, end)
-
-    return start_to_lever + lever_to_end if (start_to_lever != -1 and lever_to_end != -1) else -1
+    # 레버위치~출구 거리 계산
+    exit_cnt = get_cnt(maps,start=L_pos,end=E_pos)
+    return exit_cnt+lever_cnt if exit_cnt != -1 else -1
